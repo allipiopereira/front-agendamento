@@ -8,6 +8,8 @@ Vue.use(Vuetify)
 
 Vue.config.productionTip = false
 
+// eslint-disable-next-line
+/* eslint-disable */
 new Vue({
   store,
   render: h => h(App)
