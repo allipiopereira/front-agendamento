@@ -12,14 +12,9 @@ const store = new Vuex.Store({
     pass: 1,
     type: "",
     date: null,
-    time: null,
     data: {}
   },
   mutations: {
-    showSnackbar(state, value) {
-      state.snackbar = true
-      state.text = value.text
-    },
     setName(state, value) {
       state.name = value.name
     },
@@ -55,12 +50,16 @@ const store = new Vuex.Store({
           state.data = response.config.data
 
           commit('addPass')
+
+          state.message = "Agendando..."
         })
         .catch(error => {
           console.log("Error")
+          state.message = "Error"
         })
         .finally(() => {
           console.log('Agendado com sucesso!')
+          state.message = "Agendado com sucesso!"
         })
     }
   }

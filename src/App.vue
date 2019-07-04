@@ -1,5 +1,7 @@
 <template>
   <v-app>
+    <Notification :snackbar="snackbar" :message="this.$store.state.message" />
+
     <h2 class="mr-auto ml-auto mt-5 mb-2 ml-3 mr-3">Agende o serviço que deseja e receba sua senha</h2>
 
     <v-container fluid>
@@ -100,11 +102,18 @@
 </template>
 
 <script>
-import { mapMutations, mapActions } from 'vuex'
+import jsPDF from 'jspdf'
+import { mapMutations, mapActions } from "vuex";
+import Notification from "./components/Notification";
 export default {
   name: "app",
+  components: {
+    Notification
+  },
 
   data: () => ({
+    snackbar: false,
+    message: "",
     disabledSelect: false,
     disabledDataPicker: true,
     select: null,
@@ -198,44 +207,50 @@ export default {
       this.select = null;
     },
 
+    imprimir() {
+      let doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'cm',
+        format: 'letter'
+      })
+      doc.text('Seu nome: ' + `${this.name}`, 10, 10)
+      doc.save('agendamento.pdf')
+    },
+
     allowedDates: val => parseInt(val.split("-")[2], 10),
 
     // Store
     //->Mutations
-     ...mapMutations([
-       'setName',
-       'setType',
-       'setDate',
-       'setTime'
-     ]),
-     
-     ...mapActions([
-       'agendamento'
-     ]),
+    ...mapMutations(["setName", "setType", "setDate", "setTime"]),
+
+    ...mapActions(["agendamento"]),
 
     confirmar() {
       this.setName({
         name: this.name
-      })
+      });
 
       this.setType({
         type: this.type
-      })
+      });
 
       this.setDate({
         date: this.date
-      })
+      });
 
       this.setTime({
         time: this.time
-      })
+      });
+
+      this.snackbar = true
       
-      this.agendamento()
+      this.agendamento();
 
       console.log("Agendando...");
 
-      this.cancel()
+      this.imprimir()
 
+      this.cancel();
     }
   }
 };
