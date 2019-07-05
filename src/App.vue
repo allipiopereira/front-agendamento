@@ -1,6 +1,11 @@
 <template>
   <v-app>
-    <Notification :snackbar="snackbar" :message="this.$store.state.message" />
+    <v-snackbar v-model="snackbar" color="info" top right>
+      {{ this.$store.state.message }}
+      <v-btn flat fab color="red" @click="snackbar = false">
+        <v-icon>close</v-icon>
+      </v-btn>
+    </v-snackbar>
 
     <h2 class="mr-auto ml-auto mt-5 mb-2 ml-3 mr-3">Agende o serviço que deseja e receba sua senha</h2>
 
@@ -102,14 +107,10 @@
 </template>
 
 <script>
-import jsPDF from 'jspdf'
+import download from './jsPDF/download'
 import { mapMutations, mapActions } from "vuex";
-import Notification from "./components/Notification";
 export default {
   name: "app",
-  components: {
-    Notification
-  },
 
   data: () => ({
     snackbar: false,
@@ -137,31 +138,7 @@ export default {
         this.type = this.select.abbr;
         console.log(this.type);
       }
-    },
-
-    /*Docs() {
-      switch (this.select.abbr) {
-        case "RG":
-          this.docs = [
-            {
-              doc: "Certidão de nascimento (Original)"
-            },
-            {
-              doc: "ou Certidão de casamento (Original)"
-            },
-            {
-              doc: "ou Certidão de divórcio (Original)"
-            },
-            {
-              doc: "CPF"
-            }
-          ];
-          console.log(this.docs);
-          break;
-        default:
-          console.log("switchDefault");
-      }
-    },*/
+    },   
 
     // Gerando data atual
     dataAtual: function() {
@@ -207,16 +184,6 @@ export default {
       this.select = null;
     },
 
-    imprimir() {
-      let doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'cm',
-        format: 'letter'
-      })
-      doc.text('Seu nome: ' + `${this.name}`, 10, 10)
-      doc.save('agendamento.pdf')
-    },
-
     allowedDates: val => parseInt(val.split("-")[2], 10),
 
     // Store
@@ -227,7 +194,7 @@ export default {
 
     confirmar() {
       this.setName({
-        name: this.name
+        name: this.name.trim()
       });
 
       this.setType({
@@ -241,14 +208,14 @@ export default {
       this.setTime({
         time: this.time
       });
-
-      this.snackbar = true
       
       this.agendamento();
 
+      this.snackbar = true
+      
       console.log("Agendando...");
 
-      this.imprimir()
+      download()
 
       this.cancel();
     }
@@ -262,7 +229,7 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  color: rgb(19, 46, 65);
 }
 
 .radius15 {

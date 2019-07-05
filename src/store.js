@@ -14,6 +14,12 @@ const store = new Vuex.Store({
     date: null,
     data: {}
   },
+
+  getters: {
+    getName(state) {
+      return name = state.name
+    } 
+  },
   mutations: {
     setName(state, value) {
       state.name = value.name
