@@ -7,19 +7,21 @@ Vue.use(Vuex)
 //Criando uma 'senha'
 const store = new Vuex.Store({
   state: {
-    message: "",
+    message: '',
     name: "",
     pass: 1,
     type: "",
     date: null,
-    data: {}
+    data: {},
+    files: []
   },
 
   getters: {
     getName(state) {
       return name = state.name
-    } 
+    }
   },
+
   mutations: {
     setName(state, value) {
       state.name = value.name
@@ -39,9 +41,18 @@ const store = new Vuex.Store({
 
     setTime(state, value) {
       state.time = value.time
+    },
+
+    addFile(state, value) {
+      state.files = value
     }
   },
-  actions: {    
+
+  actions: {
+    addFile({ commit, file }) {
+      commit('addFile', value)
+    },
+
     async agendamento({ commit, state }) {
       api().post('/agendar', {
         name: await state.name,

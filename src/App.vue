@@ -41,8 +41,8 @@
                       :allowed-dates="allowedDates"
                       :first-day-of-week="0"
                       locale="pt-br"
-                      :min="dataAtual"
-                      :max="dataMax"
+                      :min="dateSelect"
+                      :max="dateMax"
                       :disabled="disabledDataPicker"
                     ></v-date-picker>
                   </v-flex>
@@ -75,12 +75,25 @@
                     </v-card>
                   </v-flex>
 
-                  <v-flex xs12 md10>
-                    <v-card class="box-shadow radius15">
+                  <!--<v-flex xs12 md10>
+                    <v-card class="box-shadow radius15 mb-4">
                       <v-card-title class="bb-1 border-grey">Documentos necessários</v-card-title>
 
                       <v-card-text>Ao confirmar você recebar sua senha junto com orietações e uma lista dos documentos necessários</v-card-text>
                     </v-card>
+                  </v-flex>-->
+
+                  <v-flex xs12 md10>
+                    <uploader @change="change" :file="file" :options="uploadConfig.options" class="uploader-vue">
+                      <uploader-unsupport></uploader-unsupport>
+                      <uploader-btn
+                        :attrs="uploadConfig.attrs"
+                        :single="true"
+                        style="border-radius: 200px;"
+                      >Enviar Arquivo</uploader-btn>
+
+                      <uploader-list></uploader-list>
+                    </uploader>
                   </v-flex>
                 </v-layout>
               </v-flex>
@@ -100,21 +113,23 @@
             </v-layout>
           </v-container>
         </v-flex>
-        {{ this.$store.state.data }}
       </v-layout>
     </v-container>
+    {{ this.file }}
   </v-app>
 </template>
 
 <script>
-import download from './jsPDF/download'
+import download from "./jsPDF";
+import vueUploader from "./uploader";
 import { mapMutations, mapActions } from "vuex";
 export default {
   name: "app",
 
   data: () => ({
+    uploadConfig: {},
+    file: [],
     snackbar: false,
-    message: "",
     disabledSelect: false,
     disabledDataPicker: true,
     select: null,
@@ -130,22 +145,25 @@ export default {
     ]
   }),
 
+  mounted() {
+    this.uploadConfig = vueUploader;
+  },
+
   computed: {
     dataPicker() {
       if (this.select) {
         this.disabledDataPicker = false;
         this.disabledSelect = true;
         this.type = this.select.abbr;
-        console.log(this.type);
       }
-    },   
+    },
 
     // Gerando data atual
-    dataAtual: function() {
+    dateSelect: function() {
       let date = new Date();
       let year = date.getFullYear();
       let month = date.getMonth() + 1;
-      let dt = date.getDate();
+      let dt = date.getDate() + 1;
 
       if (dt < 10) {
         dt = "0" + dt;
@@ -157,7 +175,7 @@ export default {
     },
 
     // Gerando data máxima
-    dataMax: function() {
+    dateMaxSelect: function() {
       let date = new Date();
       let year = date.getFullYear();
       let month = date.getMonth() + 3;
@@ -173,6 +191,14 @@ export default {
   },
 
   methods: {
+    // Store -> Getters, Mutations and Actions
+    ...mapMutations(["setName", "setType", "setDate", "setTime"]),
+    ...mapActions(["agendamento"]),
+
+    change() {
+      console.log("change")
+    },
+
     clearName() {
       this.name = "";
     },
@@ -180,17 +206,11 @@ export default {
       this.disabledDataPicker = true;
       this.disabledSelect = false;
       this.clearName();
-      this.date = this.dataAtual;
+      this.date = this.dateSelect;
       this.select = null;
     },
 
     allowedDates: val => parseInt(val.split("-")[2], 10),
-
-    // Store
-    //->Mutations
-    ...mapMutations(["setName", "setType", "setDate", "setTime"]),
-
-    ...mapActions(["agendamento"]),
 
     confirmar() {
       this.setName({
@@ -208,14 +228,14 @@ export default {
       this.setTime({
         time: this.time
       });
-      
+
       this.agendamento();
 
-      this.snackbar = true
-      
+      this.snackbar =  true
+
       console.log("Agendando...");
 
-      download()
+      download();
 
       this.cancel();
     }
@@ -264,6 +284,24 @@ div.v-menu__content.theme--light.menuable__content__active {
   > div
   > div.flex.xs12.md10
   > div {
+  border-radius: 15px;
+}
+
+.uploader-vue {
+  width: auto;
+  font-size: 12px;
+  box-shadow: -1px 0px 12px -2px #ccc;
+}
+.uploader-vue .uploader-btn {
+  margin-right: 4px;
+  background-color: #fff;
+  border: none;
+}
+.uploader-vue .uploader-list {
+  margin-top: 5px;
+  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   border-radius: 15px;
 }
 </style>
