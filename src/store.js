@@ -2,7 +2,6 @@ import api from './services/api'
 import Vue from 'vue'
 import Vuex from 'vuex'
 import download from "./jsPDF";
-import moment from "moment"
 
 Vue.use(Vuex)
 
