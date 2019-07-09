@@ -5,7 +5,7 @@ export default {
     },
 
     attrs: {
-        accept: "application/pdf"
+        accept:  "application/pdf"
     }
 }
 

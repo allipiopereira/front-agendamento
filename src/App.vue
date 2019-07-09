@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-snackbar v-model="snackbar" color="info" top right>
+    <v-snackbar v-model="snackbar" color="info" :timeout="30000" top right>
       {{ this.$store.state.message }}
       <v-btn flat fab color="red" @click="snackbar = false">
         <v-icon>close</v-icon>
@@ -75,18 +75,18 @@
                     </v-card>
                   </v-flex>
 
-                  <!--<v-flex xs12 md10>
-                    <v-card class="box-shadow radius15 mb-4">
-                      <v-card-title class="bb-1 border-grey">Documentos necessários</v-card-title>
-
-                      <v-card-text>Ao confirmar você recebar sua senha junto com orietações e uma lista dos documentos necessários</v-card-text>
-                    </v-card>
-                  </v-flex>-->
-
                   <v-flex xs12 md10>
-                    <uploader @change="change" :file="file" :options="uploadConfig.options" class="uploader-vue">
+                    <uploader
+                      @file-added="onFileAdded"
+                      @file-success="onFileSuccess"
+                      @file-progress="onFileProgress"
+                      @file-error="onFileError"
+                      :options="uploadConfig.options"
+                      class="uploader-vue"
+                    >
                       <uploader-unsupport></uploader-unsupport>
                       <uploader-btn
+                        id="global-uploader-btn"
                         :attrs="uploadConfig.attrs"
                         :single="true"
                         style="border-radius: 200px;"
@@ -110,25 +110,48 @@
                 class="mt-4 radius15"
                 @click="cancel"
               >Cancelar</v-btn>
+
+              <v-btn
+                v-if="!disabledDataPicker"
+                color="primary"
+                class="mt-4 radius15"
+                @click="listar"
+              >Listar</v-btn>
             </v-layout>
           </v-container>
         </v-flex>
+
+        <v-flex xs12>
+          <!--<v-list two-line style="background-color: #ccc;">
+            <v-list-tile
+              v-for="(items, i) in this.$store.state.data"
+              :key="i"
+              class="mb-2 ba-1 radius15"
+              style="background-color: #eee;"
+            >
+              {{ items.name }}
+              <v-spacer></v-spacer>
+              {{ items.date }}
+              <v-spacer></v-spacer>
+              {{ items.type }}
+            </v-list-tile>
+          </v-list>-->
+        </v-flex>
       </v-layout>
     </v-container>
-    {{ this.file }}
   </v-app>
 </template>
 
 <script>
-import download from "./jsPDF";
 import vueUploader from "./uploader";
 import { mapMutations, mapActions } from "vuex";
+import { setTimeout } from "timers";
 export default {
   name: "app",
 
   data: () => ({
     uploadConfig: {},
-    file: [],
+    f: {},
     snackbar: false,
     disabledSelect: false,
     disabledDataPicker: true,
@@ -138,11 +161,13 @@ export default {
     date: null,
     dateMax: null,
     docs: [],
+    itemsAgendados: [],
     items: [
       { state: "Emissão de RG", abbr: "RG" },
       { state: "Emissão de CPF", abbr: "CPF" },
       { state: "Emissão de CTPS", abbr: "CTPS" }
-    ]
+    ],
+    dialog: false
   }),
 
   mounted() {
@@ -191,12 +216,47 @@ export default {
   },
 
   methods: {
+    onFileAdded(file) {
+      console.log(file);
+      file.fileType !== "application/pdf"
+        ? this.fileRemove(file)
+        : this.fileAdd(file);
+
+      console.log("onFileAdded: " + file.name);
+    },
+    onFileProgress(rootFile, file, chunk) {
+      console.log(
+        `Enviando: ${file.name}，chunk：${chunk.startByte /
+          1024 /
+          1024} ~ ${chunk.endByte / 1024 / 1024}`
+      );
+    },
+    onFileSuccess(rootFile, file, chunk) {
+      console.log("onFileSuccess: " + file.name);
+    },
+    onFileError(rootFile, file, chunk) {
+      console.log(error);
+    },
     // Store -> Getters, Mutations and Actions
     ...mapMutations(["setName", "setType", "setDate", "setTime"]),
-    ...mapActions(["agendamento"]),
+    ...mapActions(["agendamento", "agendados"]),
 
-    change() {
-      console.log("change")
+    fileAdd(file) {
+      this.$store.state.message = "Arquivo adicionado!";
+      this.snackbar = true;
+      setTimeout(() => {
+        console.log("setTimeout");
+        this.$store.state.message = "Você pode adicionar mais um";
+      }, 5000);
+
+      console.log("fileAdd");
+    },
+
+    fileRemove(file) {
+      file.cancel();
+      this.$store.state.message = "Ops, isso não é um pdf...";
+      this.snackbar = true;
+      console.log("fileRemove: " + file.abord);
     },
 
     clearName() {
@@ -225,19 +285,21 @@ export default {
         date: this.date
       });
 
-      this.setTime({
-        time: this.time
-      });
-
       this.agendamento();
 
-      this.snackbar =  true
+      this.snackbar = true;
 
       console.log("Agendando...");
 
-      download();
-
       this.cancel();
+    },
+
+    listar() {
+      this.setDate({
+        date: this.date
+      });
+
+      this.agendados();
     }
   }
 };
@@ -303,5 +365,9 @@ div.v-menu__content.theme--light.menuable__content__active {
   overflow-x: hidden;
   overflow-y: auto;
   border-radius: 15px;
+}
+
+.radius150 {
+  border-radius: 150px;
 }
 </style>

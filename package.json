@@ -11,6 +11,7 @@
     "axios": "^0.19.0",
     "core-js": "^2.6.5",
     "jspdf": "^1.5.3",
+    "moment": "^2.24.0",
     "vue": "^2.6.10",
     "vue-simple-uploader": "^0.7.1",
     "vuetify": "^1.5.16",

@@ -1,15 +1,17 @@
 import api from './services/api'
 import Vue from 'vue'
 import Vuex from 'vuex'
+import download from "./jsPDF";
+import moment from "moment"
 
 Vue.use(Vuex)
 
 //Criando uma 'senha'
 const store = new Vuex.Store({
   state: {
-    message: '',
+    message: "Agendando...",
     name: "",
-    pass: 1,
+    pass: null,
     type: "",
     date: null,
     data: {},
@@ -56,27 +58,52 @@ const store = new Vuex.Store({
     async agendamento({ commit, state }) {
       api().post('/agendar', {
         name: await state.name,
-        pass: await state.pass,
         type: await state.type,
         date: await state.date,
-        time: await state.time
       })
         .then(response => {
-          console.log(response.config.data)
+          console.log(response)
+
+          state.pass = response.data.data.pass
 
           state.data = response.config.data
 
-          commit('addPass')
+          console.log(response.data.data.hours)
 
-          state.message = "Agendando..."
+          download()
+
+          state.message = "Agendado com sucesso!"
+        })
+
+        .catch(error => {
+          console.log("Error " + error.message)
+          state.message = "Error: " + `${error.message}`
+        })
+        .finally(() => {
+          console.log('Finalizado!')
+        })
+    },
+
+    async agendados({ commit, state }) {
+      console.log("Listando agendados: v-list")
+      api().get('agendados/' + state.date)
+        .then(response => {
+          console.log(state.date)
+
+          response.data.data ? console.log(response.data.data) : console.log(response.data.message)
+
+          state.data = response.data.data
+
+          state.message = "Agendados..."
         })
         .catch(error => {
           console.log("Error")
           state.message = "Error"
+
+          console.log(response)
         })
         .finally(() => {
-          console.log('Agendado com sucesso!')
-          state.message = "Agendado com sucesso!"
+          console.log('Listados!')
         })
     }
   }
