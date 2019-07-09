@@ -5,7 +5,6 @@ import download from "./jsPDF";
 
 Vue.use(Vuex)
 
-//Criando uma 'senha'
 const store = new Vuex.Store({
   state: {
     message: "Agendando...",
