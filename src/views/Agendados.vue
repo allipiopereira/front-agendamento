@@ -68,7 +68,7 @@
                   <v-icon>close</v-icon>
                 </v-btn>
 
-                <v-btn flat fab small @click="downloadFile(i)" :id="'btnDownloadFile'">
+                <v-btn flat fab small @click="download(i, item.name)" :id="'btnDownloadFile'">
                   <v-icon>arrow_downward</v-icon>
                 </v-btn>
               </v-list-tile>
@@ -131,7 +131,7 @@ export default {
 
   methods: {
     ...mapMutations(["setDate", "setUserID"]),
-    ...mapActions(["agendados", "deletar"]),
+    ...mapActions(["agendados", "deletar", "download"]),
 
     listar() {
       this.setDate({
@@ -213,8 +213,8 @@ export default {
       );
     },
 
-    downloadFile(value) {
-      console.log("downloadFile: " + value);
+    download(value, name) {
+      console.log("downloadFile: " + value + " : " + name);
     }
   }
 };

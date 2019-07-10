@@ -1,5 +1,11 @@
 <template>
   <div>
+    <loading
+      :active.sync="isLoading"
+      :can-cancel="false"
+      :is-full-page="fullPage"
+    ></loading>
+
     <v-snackbar v-model="snackbar" color="info" :timeout="30000" top right>
       {{ this.$store.state.message }}
       <v-btn flat fab color="red" @click="snackbar = false">
@@ -81,7 +87,9 @@
                       @file-success="onFileSuccess"
                       @file-progress="onFileProgress"
                       @file-error="onFileError"
+                      @file-removed="remove"
                       :options="uploadConfig.options"
+                      :file-category="fileCategory"
                       class="uploader-vue"
                     >
                       <uploader-unsupport></uploader-unsupport>
@@ -117,13 +125,17 @@
         style="border-radius: 15px;"
       >Cancelar</v-btn>
     </v-container>
+    {{ this.$store.state.file }}
   </div>
 </template>
 
 <script>
-import vueUploader from "../uploader";
 import { mapMutations, mapActions } from "vuex";
+import vueUploader from "../uploader";
+import Loading from "vue-loading-overlay";
 import { setTimeout } from "timers";
+import { constants } from "crypto";
+import "vue-loading-overlay/dist/vue-loading.css";
 export default {
   name: "Agendar",
 
@@ -145,8 +157,15 @@ export default {
       { state: "Emissão de CPF", abbr: "CPF" },
       { state: "Emissão de CTPS", abbr: "CTPS" }
     ],
-    dialog: false
+    dialog: false,
+    countActions: 0,
+    isLoading: false,
+    fullPage: true
   }),
+
+  components: {
+    Loading
+  },
 
   mounted() {
     this.uploadConfig = vueUploader;
@@ -190,17 +209,25 @@ export default {
         month = "0" + month;
       }
       return (this.dateMax = year + "-" + month + "-" + dt);
+    },
+
+    fileCategory() {
+      document['pdf']
     }
   },
 
   methods: {
+    onLoader() {
+      this.isLoading = true;
+      setTimeout(() => {
+        this.isLoading = false;
+      }, 5000);
+    },
     onFileAdded(file) {
-      console.log(file);
+      this.onLoader()
       file.fileType !== "application/pdf"
         ? this.fileRemove(file)
         : this.fileAdd(file);
-
-      console.log("onFileAdded: " + file.name);
     },
     onFileProgress(rootFile, file, chunk) {
       console.log(
@@ -209,32 +236,63 @@ export default {
           1024} ~ ${chunk.endByte / 1024 / 1024}`
       );
     },
-    onFileSuccess(rootFile, file, chunk) {
-      console.log("onFileSuccess: " + file.name);
-    },
-    onFileError(rootFile, file, chunk) {
-      console.log(error);
-    },
+    onFileSuccess(rootFile, file, chunk) {},
+    onFileError(rootFile, file, chunk) {},
     // Store -> Getters, Mutations and Actions
     ...mapMutations(["setName", "setType", "setDate", "setTime"]),
-    ...mapActions(["agendamento"]),
+    ...mapActions(["agendar", "addFile", "removeFile"]),
 
-    fileAdd(file) {
-      this.$store.state.message = "Arquivo adicionado!";
-      this.snackbar = true;
+    async fileAdd(file) {
+      this.snackbar = await true;
+      this.$store.state.message = await "Arquivo adicionado!";
+      await this.countActions++;
+      let btn = await document.getElementById("global-uploader-btn");
+
       setTimeout(() => {
-        console.log("setTimeout");
-        this.$store.state.message = "Você pode adicionar mais um";
-      }, 5000);
+        if (this.countActions < 3) {
+          this.$store.state.message = "Você pode adicionar mais um";
+        } else {
+          this.$store.state.message = "Você  não pode mais adicionar";
+        }
+      }, 4000);
 
-      console.log("fileAdd");
+      await this.addFile(file.uploader.uploader.files);
+
+      console.log(file.uploader.uploader.files);
+
+      return (await this.countActions) === 3
+        ? (btn.style.visibility = "hidden")
+        : "";
     },
 
-    fileRemove(file) {
+    async fileRemove(file) {
+      this.onLoader()
       file.cancel();
-      this.$store.state.message = "Ops, isso não é um pdf...";
-      this.snackbar = true;
-      console.log("fileRemove: " + file.abord);
+      await this.removeFile(file);
+      this.$store.state.message = await "Ops, isso não é um pdf...";
+      this.snackbar = await true;
+      console.log("Removido");
+    },
+
+    async remove(file) {
+      this.onLoader()
+      await this.removeFile(file);
+      this.countActions = (await this.countActions) - 1;
+      console.log(this.countActions);
+      console.log("File removido: " + file.name);
+      let btn = await document.getElementById("global-uploader-btn");
+
+      setTimeout(() => {
+        if (this.countActions < 3) {
+          this.$store.state.message = "Você pode adicionar mais um";
+        } else {
+          this.$store.state.message = "Você  não pode mais adicionar";
+        }
+      }, 4000);
+
+      return (await this.countActions) < 3
+        ? (btn.style.visibility = "visible")
+        : (btn.style.visibility = "hidden");
     },
 
     clearName() {
@@ -251,6 +309,8 @@ export default {
     allowedDates: val => parseInt(val.split("-")[2], 10),
 
     confirmar() {
+      this.onLoader()
+
       this.setName({
         name: this.name.trim()
       });
@@ -263,7 +323,9 @@ export default {
         date: this.date
       });
 
-      this.agendamento();
+      setTimeout(() => {
+        this.agendar();
+      }, 4000);
 
       this.snackbar = true;
 
