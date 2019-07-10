@@ -7,13 +7,16 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({
   state: {
-    message: "Agendando...",
+    message: "",
+    msg: '',
+    userID: null,
     name: "",
     pass: null,
     type: "",
     date: null,
     data: {},
-    files: []
+    files: [],
+    qtdAgendamentos: null
   },
 
   getters: {
@@ -43,6 +46,10 @@ const store = new Vuex.Store({
       state.time = value.time
     },
 
+    setUserID(state, value) {
+      state.userID = value.userID
+    },
+
     addFile(state, value) {
       state.files = value
     }
@@ -54,6 +61,8 @@ const store = new Vuex.Store({
     },
 
     async agendamento({ commit, state }) {
+      state.message = "Agendando..."
+
       api().post('/agendar', {
         name: await state.name,
         type: await state.type,
@@ -86,22 +95,35 @@ const store = new Vuex.Store({
       console.log("Listando agendados: v-list")
       api().get('agendados/' + state.date)
         .then(response => {
-          console.log(state.date)
-
           response.data.data ? console.log(response.data.data) : console.log(response.data.message)
 
           state.data = response.data.data
 
-          state.message = "Agendados..."
+          state.qtdAgendamentos = response.data.data ? response.data.data.length : null
+
+          console.log(state.qtdAgendamentos)
+
+          state.message = response.data.message ? response.data.message : "Listados: " +`${state.qtdAgendamentos}` + " agendamentos"
         })
         .catch(error => {
           console.log("Error")
-          state.message = "Error"
+          state.message = error
 
           console.log(response)
         })
         .finally(() => {
           console.log('Listados!')
+        })
+    },
+
+    async deletar({ commit,  state}) {
+      console.log("Deletando...")
+      api().delete('/delete/' + state.userID)
+        .then(response => {
+          console.log(response)
+        })
+        .catch(error => {
+          console.log(error)
         })
     }
   }

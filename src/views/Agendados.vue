@@ -1,9 +1,16 @@
 <template>
   <div>
-    <v-container fluid>
-      <v-layout row wrap>
-        <h2 class="mr-auto ml-auto mt-4 mb-4">Lista dos Agendados</h2>
+    <v-snackbar v-model="snackbar" :timeout="30000" :color="color" top right>
+      {{ this.$store.state.message }}
+      <v-btn flat fab color="white" @click="snackbar = false">
+        <v-icon>close</v-icon>
+      </v-btn>
+    </v-snackbar>
 
+    <h2 class="mr-auto ml-auto mt-4 mb-4">Lista dos Agendados</h2>
+
+    <v-container fill-height>
+      <v-layout row wrap align-center justify-center>
         <v-flex xs12 md10>
           <v-date-picker
             v-model="date"
@@ -12,24 +19,60 @@
             :min="dateSelect"
             :max="dateMax"
           ></v-date-picker>
-
-          <v-btn color="primary" class="mt-4" @click="listar" style="border-radius: 15px;">Listar</v-btn>
         </v-flex>
 
-        <v-flex xs12>
+        <v-flex xs12 md10>
+          <v-btn
+            tag="button"
+            @click="listar"
+            color="primary"
+            class="mt-4"
+            style="border-radius: 15px;"
+          >Listar</v-btn>
+        </v-flex>
+
+        <v-flex xs12 class="mt-5" v-if="showList">
           <v-list two-line style="background-color: #ccc;">
-            <v-list-tile
-              v-for="(items, i) in this.$store.state.data"
+            <div
+              v-for="(item, i) in this.$store.state.data"
               :key="i"
-              class="mb-2 ba-1 radius15"
+              class="radius15"
               style="background-color: #eee;"
             >
-              {{ items.name }}
-              <v-spacer></v-spacer>
-              {{ items.date }}
-              <v-spacer></v-spacer>
-              {{ items.type }}
-            </v-list-tile>
+              <v-subheader>
+                <h3>Nome: {{item.name}}</h3>
+
+                <v-spacer></v-spacer>
+
+                <h3 v-html="`Senha: ${item.pass}`"></h3>
+              </v-subheader>
+
+              <v-divider></v-divider>
+
+              <v-list-tile @click :id="'item'+i" class="mb-2 mt-1">
+                <v-list-tile-avatar>
+                  <v-icon>perm_contact_calendar</v-icon>
+                </v-list-tile-avatar>
+
+                <v-list-tile-content>
+                  <v-list-tile-title>
+                    <h3 v-html="`Tipo: ${item.type}`"></h3>
+                  </v-list-tile-title>
+                </v-list-tile-content>
+
+                <v-btn flat fab small @click="feito(i, item.id)" :id="'btnFeito'">
+                  <v-icon>check</v-icon>
+                </v-btn>
+
+                <v-btn flat fab small @click="cancelado(i, item.id)" :id="'btnCancelado'">
+                  <v-icon>close</v-icon>
+                </v-btn>
+
+                <v-btn flat fab small @click="downloadFile(i)" :id="'btnDownloadFile'">
+                  <v-icon>arrow_downward</v-icon>
+                </v-btn>
+              </v-list-tile>
+            </div>
           </v-list>
         </v-flex>
       </v-layout>
@@ -39,12 +82,18 @@
 
 <script>
 import { mapMutations, mapActions } from "vuex";
+import { setTimeout } from "timers";
 export default {
   name: "Agendados",
 
   data: () => ({
     date: null,
-    dateMax: null
+    dateMax: null,
+    showList: false,
+    snackbar: false,
+    color: "info",
+    isF: false,
+    isC: false
   }),
 
   computed: {
@@ -81,8 +130,8 @@ export default {
   },
 
   methods: {
-    ...mapMutations(["setDate"]),
-    ...mapActions(["agendados"]),
+    ...mapMutations(["setDate", "setUserID"]),
+    ...mapActions(["agendados", "deletar"]),
 
     listar() {
       this.setDate({
@@ -90,13 +139,93 @@ export default {
       });
 
       this.agendados();
+
+      this.snackbar = true;
+
+      if (
+        this.$store.state.message ===
+        "Listados: " + `${this.$store.state.qtdAgendamentos}` + " agendamentos"
+      ) {
+        this.showList = true;
+      }
+    },
+
+    feito(value, userID) {
+      this.setUserID({
+        userID: userID
+      });
+      console.log("feito " + value);
+      console.log("user " + userID);
+
+      this.isF = true;
+
+      let item = document.getElementById("item" + value);
+
+      let btnDisabledFeito = item.childNodes[2];
+      let btnDisabledCancelado = item.childNodes[3];
+
+      console.log(btnDisabledFeito);
+      console.log(btnDisabledCancelado);
+
+      btnDisabledFeito.disabled = true;
+      btnDisabledCancelado.disabled = true;
+
+      this.deletar();
+
+      this.$store.state.message = "Concluido..."
+
+      this.snackbar = true;
+
+      return (
+        (item.style.backgroundColor = "#0cdd86"),
+        (item.style.borderRadius = "15px")
+      );
+    },
+
+    cancelado(value, userID) {
+      this.setUserID({
+        userID: userID
+      });
+      console.log("feito " + value);
+      console.log("user " + userID);
+
+      this.isC = true;
+
+      let item = document.getElementById("item" + value);
+
+      let btnDisabledFeito = item.childNodes[2];
+      let btnDisabledCancelado = item.childNodes[3];
+
+      console.log(item.childNodes);
+
+      btnDisabledFeito.disabled = true;
+      btnDisabledCancelado.disabled = true;
+
+      this.deletar();
+
+      this.$store.state.message = "Removido..."
+
+      this.snackbar = true;
+
+      return (
+        (item.style.backgroundColor = "#e22518"),
+        (item.style.borderRadius = "15px")
+      );
+    },
+
+    downloadFile(value) {
+      console.log("downloadFile: " + value);
     }
   }
 };
 </script>
 
 <style scoped>
-#app > div > div > div > div > div.flex.xs12.md10 > div {
+#app > div > main > div > div > div > div > div:nth-child(1) > div {
   border-radius: 20px;
+}
+
+.text-start {
+  text-align: start;
 }
 </style>

@@ -16,7 +16,7 @@
             <v-layout row wrap align-center justify-center>
               <v-flex xs12 md6 d-flex>
                 <v-layout row wrap align-center justify-center>
-                  <v-flex xs12 md6>
+                  <v-flex xs12 sm8 md8>
                     <div class="radius15 pl-2 pr-2 mb-5" style="background-color: #fbf2f2">
                       <v-select
                         flat
@@ -49,7 +49,7 @@
                 </v-layout>
               </v-flex>
 
-              <v-flex xs12 md6 d-flex v-if="!disabledDataPicker" class="mt-5">
+              <v-flex xs12 sm8 md6 d-flex v-if="!disabledDataPicker" class="mt-5">
                 <v-layout row wrap align-center justify-center>
                   <v-flex xs12 md10>
                     <v-card class="box-shadow radius15 mb-4">
@@ -97,25 +97,25 @@
                   </v-flex>
                 </v-layout>
               </v-flex>
-
-              <v-btn
-                v-if="!disabledDataPicker"
-                color="primary"
-                class="mt-4"
-                @click="confirmar"
-                style="border-radius: 15px;"
-              >Confirmar</v-btn>
-              <v-btn
-                v-if="!disabledDataPicker"
-                color="primary"
-                class="mt-4 radius15"
-                @click="cancel"
-                style="border-radius: 15px;"
-              >Cancelar</v-btn>
             </v-layout>
           </v-container>
         </v-flex>
       </v-layout>
+
+      <v-btn
+        v-if="!disabledDataPicker"
+        color="primary"
+        class="mt-4"
+        @click="confirmar"
+        style="border-radius: 15px;"
+      >Confirmar</v-btn>
+      <v-btn
+        v-if="!disabledDataPicker"
+        color="primary"
+        class="mt-4 radius15"
+        @click="cancel"
+        style="border-radius: 15px;"
+      >Cancelar</v-btn>
     </v-container>
   </div>
 </template>
@@ -299,8 +299,21 @@ div.v-menu__content.theme--light.menuable__content__active {
   border-radius: 15px;
 }
 
-#app > div.application--wrap > div > div > div > div > div > div > div > div > div.flex.xs12.md10 > div {
-    border-radius: 20px;
+#app
+  > div.application--wrap
+  > main
+  > div
+  > div
+  > div
+  > div
+  > div
+  > div
+  > div
+  > div
+  > div
+  > div.flex.xs12.md10
+  > div {
+  border-radius: 20px;
 }
 
 .uploader-vue {
