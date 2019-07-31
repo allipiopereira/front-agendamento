@@ -1,6 +1,6 @@
 export default {
     options: {
-        target: "//127.0.0.1:3333/agendar",
+        target: "//127.0.0.1:3333/files",
         testChunks: false
     },
 

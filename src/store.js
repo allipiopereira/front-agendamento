@@ -5,6 +5,16 @@ import downloadPDF from "./jsPDF";
 
 Vue.use(Vuex)
 
+function forceFileDownload (response) {
+  const url = window.URL.createObjectURL(new Blob([response.data]))
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', response.data) //or any other extension
+  document.body.appendChild(link)
+  link.click()
+  console.log("Baixando")
+}
+
 const store = new Vuex.Store({
   state: {
     message: "",
@@ -15,7 +25,6 @@ const store = new Vuex.Store({
     type: "",
     date: null,
     data: {},
-    file: [],
     qtdAgendamentos: 0
   },
 
@@ -29,9 +38,6 @@ const store = new Vuex.Store({
     setName(state, value) {
       state.name = value.name
     },
-    addPass(state) {
-      state.pass++
-    },
     setType(state, value) {
       state.type = value.type
     },
@@ -43,41 +49,13 @@ const store = new Vuex.Store({
     },
     setUserID(state, value) {
       state.userID = value.userID
-    },
-    addFile(state, file) {
-      console.log("Files: " + file.length)
-      for(let i = 0; i < file.length; i++) {
-        state.file[i] = file[i]
-      }
-    },
-    removeFile(state, file) {
-      let files = state.file
-
-      let ultimoFile
-
-      files.length === 1 ? state.file = [] : ultimoFile = files.length
-
-      let penultimoFile = ultimoFile-1
-
-      if(files.length !== 1) {
-        state.file = files.slice(penultimoFile, ultimoFile)
-
-        console.log(state.file.name)
-      }
     }
   },
 
   actions: {
-    async addFile({ commit }, file) {
-      await commit('addFile', file)
-    },
-    async removeFile({ commit }, file) {
-      await commit('removeFile', file)
-    },
-
-    async agendar({ commit, state }) {
+    async agendar({ commit, state }, file) {
       state.message = "Agendando..."
-      api().post('/agendar', {
+      api().post('/agendar/' + state.date, {
         name: await state.name,
         type: await state.type,
         date: await state.date,
@@ -85,18 +63,27 @@ const store = new Vuex.Store({
         .then(response => {
           state.pass = response.data.data.pass
           state.data = response.config.data
-          console.log(response.data.data.hours)
-          downloadPDF()
+
+          console.log(response)
+
+          //console.log(response.data.data.hours)
+          //downloadPDF()
           state.message = "Agendado com sucesso!"
+          if (file.type === "click") {
+            console.log("Não veio arquivos")
+          } else {
+            console.log("Veio arquivos")
+            this.dispatch('upload', file)
+          }
         })
         .catch(error => {
           console.log("Error " + error.message)
-          state.message = "Error: " + `${error.message}`
+          state.message = "Ops, aconteceu um erro..."
         })
         .finally(() => {
           console.log('Finalizado!')
-          this.dispatch('upload', state.file)
-          console.log("callUpload: " + state.file)
+          //this.dispatch('upload', state.file)
+          //console.log("callUpload: " + state.file)
         })
     },
 
@@ -110,7 +97,7 @@ const store = new Vuex.Store({
 
           state.data = response.data.data
 
-          state.qtdAgendamentos = response.data.data ? response.data.data.length : "oi"+ null
+          state.qtdAgendamentos = response.data.data ? response.data.data.length : "oi" + null
 
           console.log("qtd: " + state.qtdAgendamentos)
 
@@ -118,7 +105,7 @@ const store = new Vuex.Store({
         })
         .catch(error => {
           console.log("Error")
-          state.message = error
+          state.message = "Ops, aconteceu um erro..."
           console.log(response)
         })
         .finally(() => {
@@ -139,9 +126,10 @@ const store = new Vuex.Store({
 
     async upload({ commit, state }, file) {
       console.log("Enviando arquivos..." + file)
-      api().post('/upload', { file })
+      api().post('/files', { file })
         .then(response => {
           console.log("Vem da store: " + file)
+          console.log("upload: " + file.uploader.uploader.fileList.length)
           console.log(response)
         })
         .catch(error => {
@@ -149,8 +137,18 @@ const store = new Vuex.Store({
         })
     },
 
-    async download({ commit, state }, name) {
-      console.log("download: " + name)
+    async download({ commit, state }, id) {
+      console.log("downloadID: " + id)
+      api().get('/files/' + id) 
+        .then(response => {
+          console.log("Arquivo encontrado...")
+          console.log(response)
+          forceFileDownload(response)
+        })
+        .catch(error => {
+          console.log("Error -> showFile")
+          console.log(error)
+        })
     }
   }
 })

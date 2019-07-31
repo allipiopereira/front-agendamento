@@ -1,10 +1,6 @@
 <template>
   <div>
-    <loading
-      :active.sync="isLoading"
-      :can-cancel="false"
-      :is-full-page="fullPage"
-    ></loading>
+    <loading :active.sync="isLoading" :can-cancel="false" :is-full-page="fullPage"></loading>
 
     <v-snackbar v-model="snackbar" color="info" :timeout="30000" top right>
       {{ this.$store.state.message }}
@@ -81,7 +77,7 @@
                     </v-card>
                   </v-flex>
 
-                  <v-flex xs12 md10>
+                  <v-flex xs12 md10 v-if="name">
                     <uploader
                       @file-added="onFileAdded"
                       @file-success="onFileSuccess"
@@ -114,7 +110,7 @@
         v-if="!disabledDataPicker"
         color="primary"
         class="mt-4"
-        @click="confirmar"
+        @click="concluido"
         style="border-radius: 15px;"
       >Confirmar</v-btn>
       <v-btn
@@ -125,7 +121,30 @@
         style="border-radius: 15px;"
       >Cancelar</v-btn>
     </v-container>
-    {{ this.$store.state.file }}
+    <v-bottom-sheet v-model="sheet">
+      <template v-slot:activator>
+        <v-btn flat fab color="primary">
+          <v-icon color="grey">mdi-launch</v-icon>
+        </v-btn>
+      </template>
+      <v-card style="height: auto;">
+        <v-card-title>
+          <h3>{{ this.name }}, Você adicionou: {{ this.countActions }}</h3>
+          <v-spacer></v-spacer>
+          <v-icon color="red" @click="sheet = false" class="ma-0 pa-0">close</v-icon>
+        </v-card-title>
+
+        <v-card-text class="bt-1 border-grey pa-0">
+          Agendando....
+          <v-spacer></v-spacer>
+          <v-btn
+            color="red"
+            @click.native="naoConcluir"
+            style="border-radius: 15px;"
+          >Adicionar outro</v-btn>
+        </v-card-text>
+      </v-card>
+    </v-bottom-sheet>
   </div>
 </template>
 
@@ -141,7 +160,7 @@ export default {
 
   data: () => ({
     uploadConfig: {},
-    f: {},
+    f: [],
     snackbar: false,
     disabledSelect: false,
     disabledDataPicker: true,
@@ -160,7 +179,9 @@ export default {
     dialog: false,
     countActions: 0,
     isLoading: false,
-    fullPage: true
+    fullPage: true,
+    sheet: false,
+    concluir: true
   }),
 
   components: {
@@ -212,7 +233,7 @@ export default {
     },
 
     fileCategory() {
-      document['pdf']
+      document["pdf"];
     }
   },
 
@@ -224,7 +245,7 @@ export default {
       }, 5000);
     },
     onFileAdded(file) {
-      this.onLoader()
+      //this.onLoader();
       file.fileType !== "application/pdf"
         ? this.fileRemove(file)
         : this.fileAdd(file);
@@ -240,13 +261,15 @@ export default {
     onFileError(rootFile, file, chunk) {},
     // Store -> Getters, Mutations and Actions
     ...mapMutations(["setName", "setType", "setDate", "setTime"]),
-    ...mapActions(["agendar", "addFile", "removeFile"]),
+    ...mapActions(["agendar"]),
 
     async fileAdd(file) {
       this.snackbar = await true;
       this.$store.state.message = await "Arquivo adicionado!";
       await this.countActions++;
       let btn = await document.getElementById("global-uploader-btn");
+
+      console.log(file.uploader.uploader.files);
 
       setTimeout(() => {
         if (this.countActions < 3) {
@@ -256,9 +279,9 @@ export default {
         }
       }, 4000);
 
-      await this.addFile(file.uploader.uploader.files);
-
-      console.log(file.uploader.uploader.files);
+      if ((await this.countActions) >= 1) {
+        this.concluido(file);
+      }
 
       return (await this.countActions) === 3
         ? (btn.style.visibility = "hidden")
@@ -266,17 +289,18 @@ export default {
     },
 
     async fileRemove(file) {
-      this.onLoader()
+      this.onLoader();
       file.cancel();
-      await this.removeFile(file);
+
       this.$store.state.message = await "Ops, isso não é um pdf...";
       this.snackbar = await true;
       console.log("Removido");
     },
 
     async remove(file) {
-      this.onLoader()
-      await this.removeFile(file);
+      //this.onLoader();
+      console.log("Remove", file.uploader.uploader.fileList.length);
+
       this.countActions = (await this.countActions) - 1;
       console.log(this.countActions);
       console.log("File removido: " + file.name);
@@ -295,6 +319,28 @@ export default {
         : (btn.style.visibility = "hidden");
     },
 
+    naoConcluir() {
+      this.concluir = false
+      this.sheet = false;
+
+      console.log("naoconcluir: " + this.concluir);
+    },
+
+    concluido(file) {
+      if(this.concluir === false) {
+        this.concluir === true
+      }
+      console.log("concluir: " + this.concluir);
+
+      setTimeout(() => {
+        this.concluir ? this.confirmar(file) : "";
+
+        this.sheet = false;
+      }, 3000);
+
+      this.sheet = true;
+    },
+
     clearName() {
       this.name = "";
     },
@@ -304,12 +350,16 @@ export default {
       this.clearName();
       this.date = this.dateSelect;
       this.select = null;
+      this.countActions = 0
     },
 
     allowedDates: val => parseInt(val.split("-")[2], 10),
 
-    confirmar() {
-      this.onLoader()
+    confirmar(file) {
+      this.onLoader();
+
+      console.log("Confirmar --");
+      console.log(file)
 
       this.setName({
         name: this.name.trim()
@@ -324,7 +374,7 @@ export default {
       });
 
       setTimeout(() => {
-        this.agendar();
+        this.agendar(file);
       }, 4000);
 
       this.snackbar = true;

@@ -1,5 +1,11 @@
 <template>
   <div>
+    <loading
+      :active.sync="isLoading"
+      :can-cancel="false"
+      :is-full-page="fullPage"
+    ></loading>
+
     <v-snackbar v-model="snackbar" :timeout="30000" :color="color" top right>
       {{ this.$store.state.message }}
       <v-btn flat fab color="white" @click="snackbar = false">
@@ -44,12 +50,12 @@
 
                 <v-spacer></v-spacer>
 
-                <h3 v-html="`Senha: ${item.pass}`"></h3>
+                <h3 v-html="`Senha: ${i+1}`"></h3>
               </v-subheader>
 
               <v-divider></v-divider>
 
-              <v-list-tile @click :id="'item'+i" class="mb-2 mt-1">
+              <v-list-tile :id="'item'+i" class="mb-2 mt-1">
                 <v-list-tile-avatar>
                   <v-icon>perm_contact_calendar</v-icon>
                 </v-list-tile-avatar>
@@ -68,7 +74,7 @@
                   <v-icon>close</v-icon>
                 </v-btn>
 
-                <v-btn flat fab small @click="download(i, item.name)" :id="'btnDownloadFile'">
+                <v-btn flat fab small @click="downloadFile(i, item.name)" :id="'btnDownloadFile'">
                   <v-icon>arrow_downward</v-icon>
                 </v-btn>
               </v-list-tile>
@@ -83,6 +89,9 @@
 <script>
 import { mapMutations, mapActions } from "vuex";
 import { setTimeout } from "timers";
+import Loading from "vue-loading-overlay";
+import "vue-loading-overlay/dist/vue-loading.css";
+
 export default {
   name: "Agendados",
 
@@ -93,8 +102,14 @@ export default {
     snackbar: false,
     color: "info",
     isF: false,
-    isC: false
+    isC: false,
+    isLoading: false,
+    fullPage: true
   }),
+
+  components: {
+    Loading
+  },
 
   computed: {
     // Gerando data atual
@@ -132,8 +147,16 @@ export default {
   methods: {
     ...mapMutations(["setDate", "setUserID"]),
     ...mapActions(["agendados", "deletar", "download"]),
+    
+    onLoader() {
+      this.isLoading = true;
+      setTimeout(() => {
+        this.isLoading = false;
+      }, 2000);
+    },
 
     listar() {
+      this.onLoader()
       this.setDate({
         date: this.date
       });
@@ -213,8 +236,10 @@ export default {
       );
     },
 
-    download(value, name) {
+    downloadFile(value, name) {
       console.log("downloadFile: " + value + " : " + name);
+
+      this.download(value+1)
     }
   }
 };
